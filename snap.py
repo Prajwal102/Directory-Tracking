@@ -35,17 +35,16 @@ def savesnap(snap):
 
     size = 0
     snap_arr = []
-    with open("snapfile",'rb') as file_snap:
-        size = os.path.getsize("snapfile")
-        if size > 0:
+    if os.path.isfile("snapfile"):
+        with open("snapfile",'rb') as file_snap:
             snap_arr = pickle.load(file_snap)
     
-    snap_arr.append(snap)
+        snap_arr.append(snap)
 
     with open("snapfile", "wb") as file_snap:
         pickle.dump(snap_arr,file_snap)
 
-
+    print("Snapshot Saved")
 
 # with open("snapfile","rb") as f:
 #     print(os.path.getsize("snapfile"))
@@ -56,10 +55,11 @@ def savesnap(snap):
 def show_snap():
     with open("snapfile","rb") as f:
         arr = pickle.load(f)
-    print("0. Current Snap")
-    for i in range(1,len(arr)):
+        # print(arr)
+    print("0.   Current Snap\n")
+    for i in range(len(arr)):
         item = list(arr[i].keys())[0]
-        print(i,".",item)
+        print(i+1,".",item)
         print("")
     
 
@@ -68,7 +68,7 @@ def show_snap():
     if choice == 0:
         curr_choice = create_snapshot()
     else: 
-        curr_choice = arr[choice]
+        curr_choice = arr[choice-1]
         
     print(curr_choice,end="\n\n")
     
@@ -104,14 +104,11 @@ def compare_snap():
             diff['modified'].append(t)
 
 
+    print("Differences Report \n")
     print(diff)
 
 
 
-# compare_snap()
-
-# show_snap()
-# create_snapshot("C:\\Users\\prajw\\Desktop\\dir")
 
 
 if __name__ == '__main__':
@@ -128,8 +125,9 @@ if __name__ == '__main__':
     path = input("Enter path")
 
     ch = int(input("Enter choice: "))
-    print('\n\n')
+    print('\n')
     if ch in functions:
         functions[ch]()
     else:
         print("Invalid Choice")
+
