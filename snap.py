@@ -31,31 +31,24 @@ def create_snapshot():
  
 
 def savesnap(snap):
-    # print(snap)
-
     size = 0
     snap_arr = []
-    if os.path.isfile("snapfile"):
-        with open("snapfile",'rb') as file_snap:
+    if os.path.isfile(os.path.join(path,"snapfile")):
+        with open(os.path.join(path,"snapfile"),'rb') as file_snap:
             snap_arr = pickle.load(file_snap)
     
-        snap_arr.append(snap)
+    snap_arr.append(snap)
 
-    with open("snapfile", "wb") as file_snap:
+    with open(os.path.join(path,"snapfile"), "wb") as file_snap:
         pickle.dump(snap_arr,file_snap)
 
     print("Snapshot Saved")
 
-# with open("snapfile","rb") as f:
-#     print(os.path.getsize("snapfile"))
-#     data = pickle.load(f)
-#     print(data)
 
 
 def show_snap():
-    with open("snapfile","rb") as f:
+    with open(os.path.join(path,"snapfile"),"rb") as f:
         arr = pickle.load(f)
-        # print(arr)
     print("0.   Current Snap\n")
     for i in range(len(arr)):
         item = list(arr[i].keys())[0]
@@ -70,29 +63,35 @@ def show_snap():
     else: 
         curr_choice = arr[choice-1]
         
-    print(curr_choice,end="\n\n")
+    print(curr_choice)
+    print("\n")
     
     return curr_choice
 
 
 def compare_snap():
     diff = {}
-    print("Choose 1'st snap")
+    print("Choose 1'st snap\n")
     a_snap = show_snap()
     t1 = list(a_snap.keys())[0]
     t1_t = time.mktime(datetime.strptime(t1, "%d/%m/%Y %H:%M:%S").timetuple())
-    print("Choose 2nd snap")
+    print("Choose 2nd snap\n")
     b_snap = show_snap()
     t2 = list(b_snap.keys())[0]
     t2_t = time.mktime(datetime.strptime(t2, "%d/%m/%Y %H:%M:%S").timetuple())
 
     if t1_t > t2_t:
+        print("Difference between ", t2,"->",t1)
+        print("\n")
         second = list(a_snap.values())[0]
         first = list(b_snap.values())[0]
     else:
+        print("Difference between ", t1,"->",t2)
+        print("\n")
         first = list(a_snap.values())[0]
         second = list(b_snap.values())[0]
 
+    print(first)
     diff['deleted_files'] = list(set(first['files'].keys()) - set(second['files'].keys()))
     diff['added_files'] = list(set(second['files'].keys()) - set(first['files'].keys()))
     diff['modified_files'] = []
@@ -100,26 +99,29 @@ def compare_snap():
     diff['deleted_folders'] = list(set(first['subdirs']) - set(second['subdirs']))
 
     for t in set(first['files']).intersection(set(second['files'])):
+        # f_name = os.path.relpath(os.path.join(root,f),path)
+        # first_stamp = os.path.getmtime(os.path.join(path,t))
         if first['files'][t] != second['files'][t]:
             diff['modified'].append(t)
 
 
-    print("Differences Report \n")
     print(diff)
 
-
-
-
+def helpfn():
+    pass
 
 if __name__ == '__main__':
     print("1. Take snapshot")
     print("2. Show snapshots")
     print("3. Compare snaphots")
+    print("4. Help")
+    print("5. Exit")
 
     functions = {
         1:create_snapshot,
         2:show_snap,
-        3:compare_snap
+        3:compare_snap,
+        4:helpfn
     }
 
     path = input("Enter path")
