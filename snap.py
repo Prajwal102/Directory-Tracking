@@ -1,16 +1,18 @@
-import os,sys
-import pickle
+import os,sys,pickle
+from difflib import Differ
 from datetime import datetime
 import time
+
+#Creates snapshot
 def create_snapshot():
     now = datetime.now()
-    dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
+    dt_string = now.strftime("%d/%m/%Y %H:%M:%S")#for current date and time
     files = []
     direc = []
     dic = {}
     snap = {}
     file_stamp = 0
-
+    #traversing the file structure
     for root,sdirs,filenames in os.walk(path):
         for f in filenames:
             f_name = os.path.relpath(os.path.join(root,f),path)
@@ -26,28 +28,29 @@ def create_snapshot():
     tsnap = dict(files = files , subdirs = direc, index = dic)
     snap[dt_string] = tsnap
    
-
+    #sending captured snapshot for saving
     savesnap(snap)
     return snap
 
  
-
+#saves the received snapshot
 def savesnap(snap):
     size = 0
     snap_arr = []
+    #open snapshot file and read its contents
     if os.path.isfile(os.path.join(path,"snapfile")):
         with open(os.path.join(path,"snapfile"),'rb') as file_snap:
             snap_arr = pickle.load(file_snap)
-    
+    #append the current snapshot to the read file contents
     snap_arr.append(snap)
-
+    #save the contents in the file
     with open(os.path.join(path,"snapfile"), "wb") as file_snap:
         pickle.dump(snap_arr,file_snap)
 
     print("Snapshot Saved")
 
 
-
+#lists all the snapshots
 def show_snap():
     with open(os.path.join(path,"snapfile"),"rb") as f:
         arr = pickle.load(f)
@@ -74,7 +77,7 @@ def show_snap():
     
     return curr_choice
 
-
+#takes 2 snapshots and compares them
 def compare_snap():
     diff = {}
     print("Choose 1'st snap\n")
@@ -85,7 +88,7 @@ def compare_snap():
     b_snap = show_snap()
     t2 = list(b_snap.keys())[0]
     t2_t = time.mktime(datetime.strptime(t2, "%d/%m/%Y %H:%M:%S").timetuple())
-
+    #checking which is eariler snapshot
     if t1_t > t2_t:
         print("Difference between ", t2,"->",t1)
         print("\n")
@@ -96,20 +99,39 @@ def compare_snap():
         print("\n")
         first = a_snap[t1]
         second = b_snap[t2]
-
-    # print(first)
-    diff['deleted_files'] = list(set(first['files']) - set(second['files']))
-    diff['added_files'] = list(set(second['files']) - set(first['files']))
+    #using the difflib module for comparison
+    d = Differ()
+    difference_files = list(d.compare(first['files'],second['files']))
+    difference_subdirs = list(d.compare(first['subdirs'],second['subdirs']))
+    diff['deleted_files'] = []
+    diff['added_files'] = []
     diff['modified_files'] = []
-    diff['added_folders'] = list(set(second['subdirs']) - set(first['subdirs']))
-    diff['deleted_folders'] = list(set(first['subdirs']) - set(second['subdirs']))
-
+    diff['added_folders'] = []
+    diff['deleted_folders'] = []
+    common = []
+    for l in difference_files:
+        if l[0] == '-':
+            diff['deleted_files'].append(l[1:])
+        elif l[0] == '+':
+            diff['added_files'].append(l[1:])
+        else:
+            common.append(l.strip())
+    
+    for l in difference_subdirs:
+        if l[0] == '-':
+            diff['deleted_folders'].append(l[1:])
+        elif l[0] == '+':
+            diff['added_folders'].append(l[1:])
+        else:
+            common.append(l.strip())
+    
+#using get modified time for checking modifications in the file
     for t in set(first['index']).intersection(set(second['index'])):
         if first['index'][t] != second['index'][t]:
             diff['modified_files'].append(t)
-
-
+    
     print(diff)
+    
 
 def helpfn():
     print("This code does something")
